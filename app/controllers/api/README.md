@@ -1,14 +1,14 @@
 # app/controllers/api
 
-The REST API surface — 137 `.rb` controller files serving the JSON API consumed by the web SPA and third-party clients; the full route map lives in `config/routes/api.rb`. `Source: app/controllers/api`, `Source: config/routes/api.rb`
+The REST API surface — controllers serving the JSON API. The primary REST route map lives in `config/routes/api.rb`; additional `api/fasp` endpoints are defined separately in `config/routes/fasp.rb`, which the main router draws alongside `api`. `Source: config/routes/api.rb:3`, `Source: config/routes.rb:238-240`, `Source: config/routes/fasp.rb:3-4`
 
 ## Key files
 
-- `base_controller.rb` — shared base providing authentication, error handling, rate-limit headers, and pagination for every API controller (`class Api::BaseController < ApplicationController`, including `Api::ErrorHandling`, `Api::Pagination`, and related concerns). `Source: app/controllers/api/base_controller.rb:3`, `Source: app/controllers/api/base_controller.rb:7-12`
-- `v1/` — the primary API namespace (113 controllers). `Source: app/controllers/api/v1`
-- `v2/` — revised endpoints that supersede some `v1` shapes (11 controllers). `Source: app/controllers/api/v2`
-- `v1_alpha/` — experimental/unstable endpoints (1 controller). `Source: app/controllers/api/v1_alpha`
-- `config/routes/api.rb` — the route map for every endpoint in this namespace. `Source: config/routes/api.rb:3`
+- `base_controller.rb` — shared base providing authentication, error handling, rate-limit headers, and pagination for the main API controller tree (`class Api::BaseController < ApplicationController`, including `Api::ErrorHandling`, `Api::Pagination`, and related concerns). The `api/fasp` controllers are the exception: they descend from their own `Api::Fasp::BaseController < ApplicationController`. `Source: app/controllers/api/base_controller.rb:3`, `Source: app/controllers/api/base_controller.rb:7-12`, `Source: app/controllers/api/fasp/base_controller.rb:3`
+- `v1/` — the `v1` API controllers, mounted under `namespace :v1`. `Source: config/routes/api.rb:29`
+- `v2/` — the `v2` API controllers, mounted under `namespace :v2`. `Source: config/routes/api.rb:346`
+- `v1_alpha/` — endpoints the route file labels "Experimental", mounted under `namespace :v1_alpha`. `Source: config/routes/api.rb:7-8`
+- `config/routes/api.rb` — the primary REST route map for this namespace; `api/fasp` routes live in `config/routes/fasp.rb`. `Source: config/routes/api.rb:3`, `Source: config/routes/fasp.rb:3-4`
 
 ## Conventions
 
