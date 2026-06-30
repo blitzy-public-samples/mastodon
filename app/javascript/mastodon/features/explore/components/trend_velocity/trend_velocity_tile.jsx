@@ -30,6 +30,11 @@ export const TrendVelocityTile = ({ hashtags }) => {
           .reverse()
           .map((entry) => Number(entry.get('uses')))
           .toArray();
+
+        // Coerce the string-valued counts to numbers and fall back to 0 when a
+        // value is non-finite (for example a malformed, non-numeric string),
+        // so a single bad entry never renders as "NaN".
+        const uses = Number(hashtag.getIn(['history', 0, 'uses']));
         const people =
           Number(hashtag.getIn(['history', 0, 'accounts'])) +
           Number(hashtag.getIn(['history', 1, 'accounts']) ?? 0);
@@ -39,8 +44,8 @@ export const TrendVelocityTile = ({ hashtags }) => {
             key={name}
             name={name}
             to={`/tags/${name}`}
-            people={people}
-            uses={Number(hashtag.getIn(['history', 0, 'uses']))}
+            people={Number.isFinite(people) ? people : 0}
+            uses={Number.isFinite(uses) ? uses : 0}
             withGraph={false}
           >
             <TrendVelocitySparkline history={series} />

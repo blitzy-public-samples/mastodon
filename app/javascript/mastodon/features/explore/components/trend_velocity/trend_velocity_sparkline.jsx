@@ -19,18 +19,23 @@ const HEIGHT = 28;
 export const TrendVelocitySparkline = ({ history }) => {
   const intl = useIntl();
 
-  const length = history.length;
+  // Guard against non-finite entries (for example a NaN produced by coercing
+  // a malformed, non-numeric `uses` string). Only finite values can be
+  // plotted or compared, so drop everything else first and fall back to the
+  // degraded state when fewer than two finite points remain.
+  const values = history.filter((value) => Number.isFinite(value));
+  const length = values.length;
 
   if (length < 2) {
     return null;
   }
 
-  const direction = Math.sign(history[length - 1] - history[length - 2]);
+  const direction = Math.sign(values[length - 1] - values[length - 2]);
 
-  const max = Math.max(...history);
-  const min = Math.min(...history);
+  const max = Math.max(...values);
+  const min = Math.min(...values);
 
-  const points = history
+  const points = values
     .map((value, index) => {
       const x = (index / (length - 1)) * WIDTH;
       const y =
