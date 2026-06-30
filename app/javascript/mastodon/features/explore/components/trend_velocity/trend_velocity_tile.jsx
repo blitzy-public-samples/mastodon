@@ -19,9 +19,9 @@ export const TrendVelocityTile = ({ hashtags }) => {
 
   return (
     <div className='trends'>
-      <h4 className='getting-started__trends-heading'>
+      <h2 className='getting-started__trends-heading'>
         {intl.formatMessage(messages.title)}
-      </h4>
+      </h2>
 
       {hashtags.take(5).map((hashtag) => {
         const name = hashtag.get('name');
