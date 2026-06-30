@@ -1,0 +1,25 @@
+# streaming
+
+The **real-time delivery tier**: a standalone Node.js service that streams timeline, notification, and other live updates to clients over **WebSocket** and **Server-Sent Events (SSE)**. It is published as the `@mastodon/streaming` package (`Source: streaming/package.json:2`), runs as its own process (`node ./index.js`) (`Source: streaming/package.json:16`) separate from the Rails `web`/`sidekiq` processes, and fans messages out from **Redis pub/sub** to connected clients rather than receiving them directly from Rails (`Source: streaming/index.js:309`, `Source: streaming/index.js:329`). It listens on `PORT` (default `4000`) (`Source: streaming/index.js:1461`) and is reached in production through the dedicated nginx upgrade path documented in [`../docs/deployment-topology.md`](../docs/deployment-topology.md).
+
+## Key files
+
+| File          | Role                                                                                                  | Source                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `index.js`    | Service entrypoint: builds the HTTP/WebSocket servers and the Express app, subscribes to Redis, and routes channel requests. | `Source: streaming/index.js:127`, `Source: streaming/index.js:135`, `Source: streaming/index.js:136`, `Source: streaming/index.js:172`, `Source: streaming/index.js:1478` |
+| `redis.js`    | Builds the Redis connection config (`REDIS_URL`, Sentinel, or discrete `REDIS_*` vars) and creates `ioredis` clients. | `Source: streaming/redis.js:66`, `Source: streaming/redis.js:118` |
+| `database.js` | Builds the PostgreSQL pool config and returns a memoized `pg.Pool` used for token/account resolution. | `Source: streaming/database.js:11`, `Source: streaming/database.js:123` |
+| `metrics.js`  | Registers Prometheus (`prom-client`) gauges/counters and the `/metrics` request handler.              | `Source: streaming/metrics.js:21`, `Source: streaming/metrics.js:98` |
+| `logging.js`  | Configures the `pino` structured logger and redacts access tokens from request logs.                  | `Source: streaming/logging.js:39`, `Source: streaming/logging.js:49` |
+
+## Conventions
+
+- **Standalone ESM Node service, independent of the Rails process.** The package declares `"type": "module"` (`Source: streaming/package.json:10`) and is launched on its own as `node ./index.js` (`Source: streaming/package.json:16`); `startServer()` is the single bootstrap call (`Source: streaming/index.js:127`, `Source: streaming/index.js:1478`). **Why:** long-lived WebSocket/SSE connections are kept off the Rails/Puma request workers by handling them in a dedicated, separately-scalable Node tier.
+- **Redis pub/sub is the fan-out mechanism — not a direct Rails call.** A dedicated subscribe client (`Source: streaming/index.js:256`) registers `onRedisMessage` (`Source: streaming/index.js:309`) and (un)subscribes to namespaced Redis channels on demand (`Source: streaming/index.js:329`). **Why:** Rails publishes events to Redis and the streaming server relays them to clients, decoupling the producer from consumers so either tier can scale independently.
+- **Dual transport over one channel model.** The HTTP server upgrades to WebSocket via `ws` (`Source: streaming/index.js:136`) while Express also serves SSE; both resolve the same finite set of channel names (`Source: streaming/index.js:111`). **Why:** clients may use whichever transport they support without the server maintaining two separate streaming code paths.
+- **Direct, pooled PostgreSQL access for authorization.** A memoized `pg.Pool` (`Source: streaming/database.js:123`) is built from environment configuration (`Source: streaming/database.js:11`) and used to authenticate access tokens and resolve channel permissions. **Why:** the streaming tier must authorize subscriptions itself rather than round-tripping every connection through Rails.
+- **HTTP endpoints exist only for operations.** Beyond streaming, the app exposes `/api/v1/streaming/health` (`Source: streaming/index.js:263`) and `/metrics` (`Source: streaming/index.js:268`, `Source: streaming/metrics.js:98`). **Why:** the container healthcheck and Prometheus scraping both need plain HTTP probes that are independent of the streaming channels.
+
+---
+
+_Companion artifacts from the same documentation run: [`app/models/README.md`](../app/models/README.md) · [`app/services/README.md`](../app/services/README.md) · [`app/controllers/api/README.md`](../app/controllers/api/README.md) · [`app/workers/README.md`](../app/workers/README.md) · [`app/lib/activitypub/README.md`](../app/lib/activitypub/README.md) · [`docs/deployment-topology.md`](../docs/deployment-topology.md) · [`docs/feature-component-map.md`](../docs/feature-component-map.md) · [`docs/external-integration-map.md`](../docs/external-integration-map.md)_
