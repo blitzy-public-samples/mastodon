@@ -1,0 +1,21 @@
+# app/services
+
+The Rails **write/command path**: service objects that encapsulate discrete business workflows and are invoked by controllers and background workers. Many inherit from `BaseService` (`Source: app/services/base_service.rb:3`), whose single-entrypoint contract `def call(*)` raises `NotImplementedError` until a subclass overrides it (`Source: app/services/base_service.rb:9-11`); some standalone services declare a plain class with no base instead (e.g., `Source: app/services/fetch_oembed_service.rb:3`, `Source: app/services/create_collection_service.rb:3`). Services are called directly from controllers (`Source: app/controllers/api/v1/statuses_controller.rb:31`) and from Sidekiq workers (`Source: app/workers/refollow_worker.rb:23`).
+
+## Key files
+
+| File                          | Role                                                    | Source                                             |
+| ----------------------------- | ------------------------------------------------------- | -------------------------------------------------- |
+| `post_status_service.rb`      | Creates a new status and triggers its distribution.     | `Source: app/services/post_status_service.rb:3`, `Source: app/services/post_status_service.rb:42`           |
+| `fan_out_on_write_service.rb` | Pushes a new status into follower timelines/streams.    | `Source: app/services/fan_out_on_write_service.rb:3`, `Source: app/services/fan_out_on_write_service.rb:12` |
+| `follow_service.rb`           | Establishes a follow relationship (local or federated). | `Source: app/services/follow_service.rb:3`, `Source: app/services/follow_service.rb:18`                     |
+| `process_mentions_service.rb` | Resolves and links mentions within a status.            | `Source: app/services/process_mentions_service.rb:3`, `Source: app/services/process_mentions_service.rb:9`  |
+
+## Conventions
+
+- **`#call` command-object interface (the common pattern).** Most `*_service.rb` objects expose a single public entrypoint, `#call`; `BaseService`'s default `def call(*)` raises `NotImplementedError` until a subclass overrides it (`Source: app/services/base_service.rb:9-11`). Some services add further public helper methods beyond `#call` (e.g., `Source: app/services/purge_domain_service.rb:14`, `Source: app/services/purge_domain_service.rb:18`, `Source: app/services/purge_domain_service.rb:24`). Signatures vary by domain — e.g. `def call(account, options = {})` (`Source: app/services/post_status_service.rb:42`), `def call(status, options = {})` (`Source: app/services/fan_out_on_write_service.rb:12`), and `def call(source_account, target_account, options = {})` (`Source: app/services/follow_service.rb:18`). **Why:** a uniform command-object interface keeps services predictable and trivially callable from web, API, and background contexts, so no caller has to learn a bespoke per-service API.
+- **Services orchestrate models and enqueue workers; they avoid controller/view response handling.** For example, `PostStatusService` persists the status (`Source: app/services/post_status_service.rb:98`), then hands asynchronous fan-out to Sidekiq via `DistributionWorker.perform_async(@status.id)` (`Source: app/services/post_status_service.rb:166`) and `ActivityPub::DistributionWorker.perform_async(@status.id)` (`Source: app/services/post_status_service.rb:168`). Some services do issue outbound HTTP requests where the workflow requires it (e.g., `Source: app/services/fetch_oembed_service.rb:84`, `Source: app/services/verify_link_service.rb:21`, `Source: app/services/fetch_resource_service.rb:29-30`). **Why:** keeping the request/response cycle out of services makes controllers thin and lets the identical business logic run unchanged from web, API, and Sidekiq job contexts.
+
+---
+
+Companion artifacts from the same documentation run: [`../models/README.md`](../models/README.md), [`../controllers/api/README.md`](../controllers/api/README.md), [`../workers/README.md`](../workers/README.md), [`../lib/activitypub/README.md`](../lib/activitypub/README.md), [`../../docs/feature-component-map.md`](../../docs/feature-component-map.md), [`../../docs/deployment-topology.md`](../../docs/deployment-topology.md), [`../../docs/external-integration-map.md`](../../docs/external-integration-map.md).
