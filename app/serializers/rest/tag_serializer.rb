@@ -45,12 +45,10 @@ class REST::TagSerializer < ActiveModel::Serializer
   end
 
   # Local vs. Federated Trend Comparison:
-  # Gate on a dedicated, NON-RESERVED instance option (:trend_scope), NOT :scope. ActiveModelSerializers
-  # (0.10.x) reserves :scope for the serialization scope (current_user), so reading instance_options[:scope]
-  # corrupts current_user detection and breaks the byte-for-byte no-scope response contract
-  # (AAP 0.1.1/0.6.1, non-negotiable). Empirically verified: with :scope, an authenticated no-scope request
-  # DROPS following/featuring (scope: nil nils out current_user), and an anonymous scope=all request LEAKS
-  # them (current_user becomes the string "all"). The controller passes trend_scope: <validated params[:scope]>.
+  # NOTE: use a dedicated, non-reserved instance option (:trend_scope). ActiveModelSerializers
+  # reserves :scope for the serialization scope (current_user), so keying on :scope would emit
+  # history_local/history_remote on every authenticated request and break the byte-for-byte
+  # no-scope response contract. The controller passes trend_scope: <validated params[:scope]>.
   def scoped?
     instance_options && instance_options[:trend_scope].present?
   end

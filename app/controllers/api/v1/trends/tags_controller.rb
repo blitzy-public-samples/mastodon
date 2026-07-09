@@ -13,11 +13,9 @@ class Api::V1::Trends::TagsController < Api::BaseController
 
   def index
     cache_if_unauthenticated!
-    # Local vs. Federated Trend Comparison: forward the optional validated scope to the serializer as a
-    # dedicated, NON-RESERVED instance option (:trend_scope), NOT :scope. ActiveModelSerializers (0.10.x)
-    # reserves :scope for the serialization scope (current_user); passing scope: here corrupts current_user
-    # detection and breaks the byte-for-byte no-scope response contract (AAP 0.1.1/0.6.1, non-negotiable).
-    # See REST::TagSerializer#scoped? for the empirically-verified rationale and failure modes.
+    # Local vs. Federated Trend Comparison: forward optional validated scope to the serializer via a
+    # dedicated, non-reserved instance option. ActiveModelSerializers reserves :scope for the serialization
+    # scope (current_user), so it is passed as :trend_scope, matching REST::TagSerializer#scoped?.
     render json: @tags, each_serializer: REST::TagSerializer, relationships: TagRelationshipsPresenter.new(@tags, current_user&.account_id), trend_scope: scope_param
   end
 
