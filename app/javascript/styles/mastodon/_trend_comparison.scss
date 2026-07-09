@@ -37,6 +37,11 @@
       color: var(--color-text-primary);
     }
 
+    &:focus-visible {
+      outline: var(--outline-focus-default);
+      outline-offset: -2px;
+    }
+
     &--active {
       background: var(--color-bg-brand-softest);
       color: var(--color-text-primary);

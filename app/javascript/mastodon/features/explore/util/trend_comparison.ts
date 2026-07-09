@@ -48,12 +48,13 @@ export const divergenceRatio = (local: number, remote: number): number =>
   Math.max(local, remote) / Math.max(Math.min(local, remote), 1);
 
 // Badge classification with the fixed 2:1 threshold.
-// Suppress (null) when either side is zero OR the ratio is below threshold.
+// Suppress (null) when either side is zero OR the ratio is at or below the threshold;
+// a badge is shown only when divergence is strictly greater than 2:1 (AAP 0.1.1 "> 2:1").
 export const classifyDivergence = (
   local: number,
   remote: number,
 ): DivergenceBadge => {
   if (local <= 0 || remote <= 0) return null;
-  if (divergenceRatio(local, remote) < DIVERGENCE_THRESHOLD) return null;
+  if (divergenceRatio(local, remote) <= DIVERGENCE_THRESHOLD) return null;
   return local > remote ? 'local-skewed' : 'network-wide';
 };
