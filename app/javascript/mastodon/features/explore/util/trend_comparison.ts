@@ -13,15 +13,27 @@ type History = ImmutableList<ImmutableMap<string, string>> | undefined;
 export const zeroFilledSeries = (length = HISTORY_LENGTH): number[] =>
   Array.from({ length }, () => 0);
 
-// Numeric `uses` series for a sparkline, reversed to chronological order (oldest -> newest),
-// zero-filled when history is absent/empty (mirrors hashtag.tsx behavior).
-export const usesSeries = (history: History): number[] =>
-  history && history.size > 0
-    ? history
-        .reverse()
-        .map((day) => Number(day.get('uses')) || 0)
-        .toArray()
-    : zeroFilledSeries();
+// Numeric `uses` series for a sparkline, reversed to chronological order (oldest -> newest).
+// Always returns exactly HISTORY_LENGTH values: absent, empty, and partial (1-6 bucket)
+// histories are zero-filled on the left so the most-recent bucket stays on the right
+// (mirrors hashtag.tsx, which reverses most-recent-first history for the sparkline).
+export const usesSeries = (history: History): number[] => {
+  if (!history || history.size === 0) return zeroFilledSeries();
+
+  // Reverse most-recent-first -> chronological (oldest -> newest), coercing string `uses`.
+  const chronological = history
+    .reverse()
+    .map((day) => Number(day.get('uses')) || 0)
+    .toArray();
+
+  // Keep the most-recent HISTORY_LENGTH buckets and left-pad any missing older buckets
+  // with zeroes, guaranteeing a length-7 series with the newest value on the right.
+  const recent = chronological.slice(-HISTORY_LENGTH);
+
+  return recent.length < HISTORY_LENGTH
+    ? [...zeroFilledSeries(HISTORY_LENGTH - recent.length), ...recent]
+    : recent;
+};
 
 // Sum of `uses` over the most-recent N buckets (index 0 = today = "last 24h").
 export const recentUses = (history: History, buckets = 1): number =>

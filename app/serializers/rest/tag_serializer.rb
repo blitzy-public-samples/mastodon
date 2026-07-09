@@ -45,8 +45,12 @@ class REST::TagSerializer < ActiveModel::Serializer
   end
 
   # Local vs. Federated Trend Comparison:
+  # NOTE: use a dedicated, non-reserved instance option (:trend_scope). ActiveModelSerializers
+  # reserves :scope for the serialization scope (current_user), so keying on :scope would emit
+  # history_local/history_remote on every authenticated request and break the byte-for-byte
+  # no-scope response contract. The controller passes trend_scope: <validated params[:scope]>.
   def scoped?
-    instance_options && instance_options[:scope].present?
+    instance_options && instance_options[:trend_scope].present?
   end
 
   # Local vs. Federated Trend Comparison:
