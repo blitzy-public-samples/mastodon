@@ -34,13 +34,16 @@ class Trends::Tags < Trends::Base
     return unless !status.reblog? && status.public_visibility? && !status.account.silenced?
 
     status.tags.each do |tag|
-      add(tag, status.account_id, at_time) if tag.usable?
+      # Local vs. Federated Trend Comparison: convey account locality into scoped recording
+      add(tag, status.account_id, at_time, local: status.account.local?) if tag.usable?
     end
   end
 
-  def add(tag, account_id, at_time = Time.now.utc)
+  def add(tag, account_id, at_time = Time.now.utc, local: nil)
     tag.history.add(account_id, at_time)
     record_used_id(tag.id, at_time)
+    # Local vs. Federated Trend Comparison: record origin-scoped usage
+    Trends::ScopedHistory.new('tags', tag.id, local ? :local : :remote).add(account_id, at_time) unless local.nil?
   end
 
   def query

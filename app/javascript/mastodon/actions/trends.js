@@ -6,6 +6,13 @@ export const TRENDS_TAGS_FETCH_REQUEST = 'TRENDS_TAGS_FETCH_REQUEST';
 export const TRENDS_TAGS_FETCH_SUCCESS = 'TRENDS_TAGS_FETCH_SUCCESS';
 export const TRENDS_TAGS_FETCH_FAIL    = 'TRENDS_TAGS_FETCH_FAIL';
 
+// Local vs. Federated Trend Comparison: dedicated action types for the comparison tile's own Redux
+// slice, kept separate from the shared no-scope tags slice so nav-panel refreshes can never overwrite
+// the tile's scope-aware history data.
+export const TRENDS_TAGS_COMPARISON_FETCH_REQUEST = 'TRENDS_TAGS_COMPARISON_FETCH_REQUEST';
+export const TRENDS_TAGS_COMPARISON_FETCH_SUCCESS = 'TRENDS_TAGS_COMPARISON_FETCH_SUCCESS';
+export const TRENDS_TAGS_COMPARISON_FETCH_FAIL    = 'TRENDS_TAGS_COMPARISON_FETCH_FAIL';
+
 export const TRENDS_LINKS_FETCH_REQUEST = 'TRENDS_LINKS_FETCH_REQUEST';
 export const TRENDS_LINKS_FETCH_SUCCESS = 'TRENDS_LINKS_FETCH_SUCCESS';
 export const TRENDS_LINKS_FETCH_FAIL    = 'TRENDS_LINKS_FETCH_FAIL';
@@ -40,6 +47,40 @@ export const fetchTrendingHashtagsSuccess = trends => ({
 
 export const fetchTrendingHashtagsFail = error => ({
   type: TRENDS_TAGS_FETCH_FAIL,
+  error,
+  skipLoading: true,
+  skipAlert: true,
+});
+
+// Local vs. Federated Trend Comparison: fetch scope-aware trending hashtags (including
+// history_local/history_remote) into the comparison tile's OWN Redux slice. This is deliberately
+// separate from fetchTrendingHashtags() — which backs the shared, no-scope hashtag list and the
+// navigation-panel "Trending now" widget — so the tile's scoped data and the list's plain data never
+// contend for a single slice. That isolation is what fixes the empty-tile-on-load race (a no-scope
+// response would otherwise overwrite the slice and drop history_local/history_remote) and prevents the
+// nav-panel's periodic 15-minute refresh from clobbering an already-populated tile.
+export const fetchTrendingHashtagsComparison = (scope = 'all') => (dispatch) => {
+  dispatch(fetchTrendingHashtagsComparisonRequest());
+
+  api()
+    .get('/api/v1/trends/tags', { params: { scope } })
+    .then(({ data }) => dispatch(fetchTrendingHashtagsComparisonSuccess(data)))
+    .catch(err => dispatch(fetchTrendingHashtagsComparisonFail(err)));
+};
+
+export const fetchTrendingHashtagsComparisonRequest = () => ({
+  type: TRENDS_TAGS_COMPARISON_FETCH_REQUEST,
+  skipLoading: true,
+});
+
+export const fetchTrendingHashtagsComparisonSuccess = trends => ({
+  type: TRENDS_TAGS_COMPARISON_FETCH_SUCCESS,
+  trends,
+  skipLoading: true,
+});
+
+export const fetchTrendingHashtagsComparisonFail = error => ({
+  type: TRENDS_TAGS_COMPARISON_FETCH_FAIL,
   error,
   skipLoading: true,
   skipAlert: true,

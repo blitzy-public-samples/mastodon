@@ -1,0 +1,112 @@
+// Local vs. Federated Trend Comparison:
+.trend-comparison {
+  border-bottom: 1px solid var(--color-border-primary);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 16px;
+  }
+
+  &__title {
+    color: var(--color-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  &__toggle {
+    display: inline-flex;
+    gap: 4px;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  &__toggle-button {
+    padding: 4px 10px;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--color-text-primary);
+    }
+
+    // Local vs. Federated Trend Comparison: visible keyboard-focus indicator for the scope toggle.
+    &:focus-visible {
+      outline: var(--outline-focus-default);
+      outline-offset: -2px;
+    }
+
+    &--active {
+      background: var(--color-bg-brand-softest);
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    border-bottom: 1px solid var(--color-border-primary);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  &__name {
+    flex: 1 1 auto;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__sparkline {
+    flex: 0 0 auto;
+    width: 50px;
+
+    path:first-child {
+      fill: var(--color-graph-primary-fill) !important;
+      fill-opacity: 1 !important;
+    }
+
+    path:last-child {
+      stroke: var(--color-graph-primary-stroke) !important;
+      fill: none !important;
+    }
+
+    &--dimmed {
+      opacity: 0.35;
+    }
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--color-bg-brand-softest);
+    color: var(--color-text-brand);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  &__empty {
+    padding: 16px;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    text-align: center;
+  }
+}
