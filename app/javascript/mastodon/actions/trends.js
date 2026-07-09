@@ -18,11 +18,12 @@ export const TRENDS_STATUSES_EXPAND_REQUEST = 'TRENDS_STATUSES_EXPAND_REQUEST';
 export const TRENDS_STATUSES_EXPAND_SUCCESS = 'TRENDS_STATUSES_EXPAND_SUCCESS';
 export const TRENDS_STATUSES_EXPAND_FAIL    = 'TRENDS_STATUSES_EXPAND_FAIL';
 
-export const fetchTrendingHashtags = () => (dispatch) => {
+// Local vs. Federated Trend Comparison: accept optional scope and forward it as a query param
+export const fetchTrendingHashtags = (scope) => (dispatch) => {
   dispatch(fetchTrendingHashtagsRequest());
 
   api()
-    .get('/api/v1/trends/tags')
+    .get('/api/v1/trends/tags', { params: { scope } }) // Local vs. Federated Trend Comparison: axios omits `scope` when undefined
     .then(({ data }) => dispatch(fetchTrendingHashtagsSuccess(data)))
     .catch(err => dispatch(fetchTrendingHashtagsFail(err)));
 };
