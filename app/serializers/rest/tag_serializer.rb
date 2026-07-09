@@ -8,6 +8,10 @@ class REST::TagSerializer < ActiveModel::Serializer
   attribute :following, if: :current_user?
   attribute :featuring, if: :current_user?
 
+  # Local vs. Federated Trend Comparison: expose origin-scoped history when a scope is requested
+  attribute :history_local, if: :scoped?
+  attribute :history_remote, if: :scoped?
+
   def id
     object.id.to_s
   end
@@ -38,5 +42,20 @@ class REST::TagSerializer < ActiveModel::Serializer
 
   def current_user?
     !current_user.nil?
+  end
+
+  # Local vs. Federated Trend Comparison:
+  def scoped?
+    instance_options && instance_options[:scope].present?
+  end
+
+  # Local vs. Federated Trend Comparison:
+  def history_local
+    Trends::ScopedHistory.new('tags', object.id, :local).as_json
+  end
+
+  # Local vs. Federated Trend Comparison:
+  def history_remote
+    Trends::ScopedHistory.new('tags', object.id, :remote).as_json
   end
 end
