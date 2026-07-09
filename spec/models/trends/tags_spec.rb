@@ -107,4 +107,58 @@ RSpec.describe Trends::Tags do
       expect(decayed_score).to be <= original_score / 2
     end
   end
+
+  # Local vs. Federated Trend Comparison: origin-scoped recording
+  describe '#add with account locality' do
+    let(:tag) { Fabricate(:tag) }
+
+    context 'when the account is local (local: true)' do
+      before { subject.add(tag, 1, at_time, local: true) }
+
+      it 'increments the local scoped history' do
+        expect(Trends::ScopedHistory.new('tags', tag.id, :local).get(at_time).uses).to eq 1
+        expect(Trends::ScopedHistory.new('tags', tag.id, :local).get(at_time).accounts).to eq 1
+      end
+
+      it 'does not increment the remote scoped history' do
+        expect(Trends::ScopedHistory.new('tags', tag.id, :remote).get(at_time).uses).to eq 0
+      end
+
+      it 'leaves the combined history unchanged' do
+        expect(tag.history.get(at_time).uses).to eq 1
+        expect(tag.history.get(at_time).accounts).to eq 1
+      end
+    end
+
+    context 'when the account is remote (local: false)' do
+      before { subject.add(tag, 1, at_time, local: false) }
+
+      it 'increments the remote scoped history' do
+        expect(Trends::ScopedHistory.new('tags', tag.id, :remote).get(at_time).uses).to eq 1
+        expect(Trends::ScopedHistory.new('tags', tag.id, :remote).get(at_time).accounts).to eq 1
+      end
+
+      it 'does not increment the local scoped history' do
+        expect(Trends::ScopedHistory.new('tags', tag.id, :local).get(at_time).uses).to eq 0
+      end
+
+      it 'leaves the combined history unchanged' do
+        expect(tag.history.get(at_time).uses).to eq 1
+        expect(tag.history.get(at_time).accounts).to eq 1
+      end
+    end
+
+    context 'when locality is omitted (legacy caller)' do
+      before { subject.add(tag, 1, at_time) }
+
+      it 'records no scoped history' do
+        expect(Trends::ScopedHistory.new('tags', tag.id, :local).get(at_time).uses).to eq 0
+        expect(Trends::ScopedHistory.new('tags', tag.id, :remote).get(at_time).uses).to eq 0
+      end
+
+      it 'still records the combined history' do
+        expect(tag.history.get(at_time).accounts).to eq 1
+      end
+    end
+  end
 end

@@ -13,7 +13,10 @@ class Api::V1::Trends::TagsController < Api::BaseController
 
   def index
     cache_if_unauthenticated!
-    render json: @tags, each_serializer: REST::TagSerializer, relationships: TagRelationshipsPresenter.new(@tags, current_user&.account_id)
+    # Local vs. Federated Trend Comparison: forward optional validated scope to the serializer via a
+    # dedicated, non-reserved instance option. ActiveModelSerializers reserves :scope for the serialization
+    # scope (current_user), so it is passed as :trend_scope, matching REST::TagSerializer#scoped?.
+    render json: @tags, each_serializer: REST::TagSerializer, relationships: TagRelationshipsPresenter.new(@tags, current_user&.account_id), trend_scope: scope_param
   end
 
   private
@@ -46,6 +49,11 @@ class Api::V1::Trends::TagsController < Api::BaseController
 
   def offset_param
     params[:offset].to_i
+  end
+
+  # Local vs. Federated Trend Comparison: validate the optional scope param; nil (no scope) otherwise
+  def scope_param
+    params[:scope].presence_in(%w(local remote all))
   end
 
   def records_continue?

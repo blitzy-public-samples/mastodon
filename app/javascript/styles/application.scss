@@ -13,6 +13,9 @@
 @use 'mastodon/forms';
 @use 'mastodon/accounts';
 @use 'mastodon/components';
+
+// Local vs. Federated Trend Comparison:
+@use 'mastodon/trend_comparison';
 @use 'mastodon/polls';
 @use 'mastodon/modal';
 @use 'mastodon/emoji_picker';
