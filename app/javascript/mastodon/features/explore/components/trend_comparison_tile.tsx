@@ -14,6 +14,7 @@ import { LoadingIndicator } from 'mastodon/components/loading_indicator';
 import type { TrendScope } from '../util/trend_comparison';
 import {
   classifyDivergence,
+  hasScopedUsage,
   recentUses,
   usesSeries,
 } from '../util/trend_comparison';
@@ -96,10 +97,18 @@ export const TrendComparisonTile: React.FC<TrendComparisonTileProps> = ({
     [onScopeChange],
   );
 
+  // Local vs. Federated Trend Comparison: treat absent AND present-but-all-zero
+  // scoped histories as empty (a freshly-deployed instance has zero-filled keys),
+  // so the tile shows its placeholder rather than flat-zero rows. A tag with any
+  // local OR remote usage (including partial, one-sided data) keeps the tile live.
   const isEmpty =
     tags.isEmpty() ||
     tags.every(
-      (tag) => !tag.get('history_local') && !tag.get('history_remote'),
+      (tag) =>
+        !hasScopedUsage(
+          tag.get('history_local') as ScopedHistory,
+          tag.get('history_remote') as ScopedHistory,
+        ),
     );
 
   let body: React.ReactNode;

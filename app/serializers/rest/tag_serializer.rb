@@ -45,10 +45,18 @@ class REST::TagSerializer < ActiveModel::Serializer
   end
 
   # Local vs. Federated Trend Comparison:
-  # NOTE: use a dedicated, non-reserved instance option (:trend_scope). ActiveModelSerializers
-  # reserves :scope for the serialization scope (current_user), so keying on :scope would emit
-  # history_local/history_remote on every authenticated request and break the byte-for-byte
-  # no-scope response contract. The controller passes trend_scope: <validated params[:scope]>.
+  # Gate the scoped attributes on a DEDICATED, NON-RESERVED instance option (:trend_scope),
+  # passed by the controller exactly as :relationships is passed. It intentionally does NOT reuse
+  # the :scope option key: ActiveModelSerializers 0.10 reserves :scope for the serialization scope,
+  # and since scope_name defaults to :current_user the serializer's current_user resolves to that
+  # scope. Keying on :scope therefore breaks the non-negotiable byte-for-byte no-scope contract
+  # (AAP 0.6.1 / R13): for an AUTHENTICATED no-scope request the controller would pass scope: nil,
+  # and AMS get_serializer does `serialization_scope ||= options.fetch(:scope) { current_user }` --
+  # because the :scope key is present with a nil value, fetch returns that nil (the block is only
+  # run when the key is ABSENT), clobbering current_user to nil and dropping following/featuring;
+  # conversely an anonymous scope=all request would set current_user to the string "all" and wrongly
+  # emit following/featuring. A non-reserved key is the only zero-regression design (empirically
+  # verified via authenticated request specs below). The controller passes trend_scope: scope_param.
   def scoped?
     instance_options && instance_options[:trend_scope].present?
   end

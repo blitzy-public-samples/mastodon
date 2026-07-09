@@ -37,6 +37,12 @@
       color: var(--color-text-primary);
     }
 
+    // Local vs. Federated Trend Comparison: visible keyboard-focus indicator for the scope toggle.
+    &:focus-visible {
+      outline: var(--outline-focus-default);
+      outline-offset: -2px;
+    }
+
     &--active {
       background: var(--color-bg-brand-softest);
       color: var(--color-text-primary);

@@ -43,17 +43,35 @@ export const recentUses = (history: History, buckets = 1): number =>
         .reduce((sum, day) => sum + (Number(day.get('uses')) || 0), 0)
     : 0;
 
+// Sum of `uses` across the ENTIRE scoped history (all buckets). Used for
+// empty-state detection: distinguishes a truly-empty scoped history from one
+// that merely has a low most-recent bucket.
+export const seriesTotal = (history: History): number =>
+  history
+    ? history.reduce((sum, day) => sum + (Number(day.get('uses')) || 0), 0)
+    : 0;
+
+// True when a tag has ANY recorded local OR remote usage. Absent keys and
+// all-zero (freshly-deployed, present-but-zero) scoped histories both read as
+// "no usage" so the tile can fall back to its empty-state placeholder instead
+// of rendering flat-zero rows; a partial history (one side > 0) still counts as
+// usage so that row keeps rendering.
+export const hasScopedUsage = (local: History, remote: History): boolean =>
+  seriesTotal(local) > 0 || seriesTotal(remote) > 0;
+
 // Divide-by-zero-safe divergence ratio.
 export const divergenceRatio = (local: number, remote: number): number =>
   Math.max(local, remote) / Math.max(Math.min(local, remote), 1);
 
 // Badge classification with the fixed 2:1 threshold.
-// Suppress (null) when either side is zero OR the ratio is below threshold.
+// Per the AAP the badge appears only when velocity diverges *beyond* the
+// threshold (ratio strictly > 2:1); an exact 2:1 ratio must NOT badge. Suppress
+// (null) when either side is zero OR the ratio does not exceed the threshold.
 export const classifyDivergence = (
   local: number,
   remote: number,
 ): DivergenceBadge => {
   if (local <= 0 || remote <= 0) return null;
-  if (divergenceRatio(local, remote) < DIVERGENCE_THRESHOLD) return null;
+  if (divergenceRatio(local, remote) <= DIVERGENCE_THRESHOLD) return null;
   return local > remote ? 'local-skewed' : 'network-wide';
 };

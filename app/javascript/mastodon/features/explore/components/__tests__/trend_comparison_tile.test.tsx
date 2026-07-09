@@ -125,4 +125,49 @@ describe('<TrendComparisonTile />', () => {
       ),
     ).toBeDefined();
   });
+
+  // Local vs. Federated Trend Comparison: an exact 2:1 ratio must NOT badge --
+  // the badge appears only when divergence exceeds the threshold (ratio > 2:1).
+  it('shows no badge at an exact 2:1 local-over-remote ratio', () => {
+    renderTile(
+      fromJS([
+        buildTag('edgelocal', [2, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]),
+      ]) as unknown as TagList,
+    );
+
+    // The row still renders (it has usage); only the badge is suppressed.
+    expect(screen.getByText(/edgelocal/)).toBeDefined();
+    expect(screen.queryByText('Hot here, quiet elsewhere')).toBeNull();
+    expect(screen.queryByText('Network-wide trend')).toBeNull();
+  });
+
+  it('shows no badge at an exact 2:1 remote-over-local ratio', () => {
+    renderTile(
+      fromJS([
+        buildTag('edgeremote', [1, 1, 1, 1, 1, 1, 1], [2, 1, 1, 1, 1, 1, 1]),
+      ]) as unknown as TagList,
+    );
+
+    expect(screen.getByText(/edgeremote/)).toBeDefined();
+    expect(screen.queryByText('Hot here, quiet elsewhere')).toBeNull();
+    expect(screen.queryByText('Network-wide trend')).toBeNull();
+  });
+
+  // Local vs. Federated Trend Comparison: present-but-all-zero scoped history
+  // (a freshly-deployed instance) must show the placeholder, not flat-zero rows.
+  it('renders the placeholder when scoped history is present but all zero', () => {
+    renderTile(
+      fromJS([
+        buildTag('freshdeploy', [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]),
+      ]) as unknown as TagList,
+    );
+
+    expect(
+      screen.getByText(
+        'Not enough data yet to compare local and federated trends.',
+      ),
+    ).toBeDefined();
+    // The placeholder replaces the rows -- the hashtag must NOT render.
+    expect(screen.queryByText(/freshdeploy/)).toBeNull();
+  });
 });

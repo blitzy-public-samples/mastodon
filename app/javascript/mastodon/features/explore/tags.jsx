@@ -14,6 +14,9 @@ import { ImmutableHashtag as Hashtag } from 'mastodon/components/hashtag';
 import { LoadingIndicator } from 'mastodon/components/loading_indicator';
 import { WithRouterPropTypes } from 'mastodon/utils/react_router';
 
+// Local vs. Federated Trend Comparison:
+import { TrendComparisonTile } from './components/trend_comparison_tile';
+
 const mapStateToProps = state => ({
   hashtags: state.getIn(['trends', 'tags', 'items']),
   isLoadingHashtags: state.getIn(['trends', 'tags', 'isLoading']),
@@ -24,6 +27,8 @@ class Tags extends PureComponent {
   static propTypes = {
     hashtags: ImmutablePropTypes.list,
     isLoading: PropTypes.bool,
+    // Local vs. Federated Trend Comparison:
+    isLoadingHashtags: PropTypes.bool,
     dispatch: PropTypes.func.isRequired,
     ...WithRouterPropTypes,
   };
@@ -36,11 +41,18 @@ class Tags extends PureComponent {
       return;
     }
 
-    dispatch(fetchTrendingHashtags());
+    // Local vs. Federated Trend Comparison: fetch combined (Compare) scope on mount
+    dispatch(fetchTrendingHashtags('all'));
   }
 
+  // Local vs. Federated Trend Comparison: re-fetch with the toggle-selected scope
+  handleScopeChange = (scope) => {
+    this.props.dispatch(fetchTrendingHashtags(scope));
+  };
+
   render () {
-    const { isLoading, hashtags } = this.props;
+    // Local vs. Federated Trend Comparison: also read the scoped loading flag for the tile
+    const { isLoading, hashtags, isLoadingHashtags } = this.props;
 
     if (!isLoading && hashtags.isEmpty()) {
       return (
@@ -54,6 +66,8 @@ class Tags extends PureComponent {
 
     return (
       <div className='scrollable explore__links' data-nosnippet>
+        {/* Local vs. Federated Trend Comparison: comparison tile above the hashtag list */}
+        <TrendComparisonTile tags={hashtags} isLoading={isLoadingHashtags} onScopeChange={this.handleScopeChange} />
         {isLoading ? (<LoadingIndicator />) : hashtags.map(hashtag => (
           <Hashtag key={hashtag.get('name')} hashtag={hashtag} />
         ))}
