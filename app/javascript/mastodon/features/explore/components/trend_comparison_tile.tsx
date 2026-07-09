@@ -139,6 +139,28 @@ export const TrendComparisonTile: React.FC<TrendComparisonTileProps> = ({
           <div className='trend-comparison__row' key={name}>
             <span className='trend-comparison__name'>#{name}</span>
 
+            {/* Local vs. Federated Trend Comparison: render the (variable-width) divergence badge
+                BEFORE the paired sparklines so the sparklines are always the trailing, fixed-width
+                elements of the row. Because `__name` grows (flex: 1 1 auto) it absorbs the slack and
+                pushes the badge + sparklines flush right, so the sparklines land in a consistent
+                vertical column across rows regardless of whether a badge is present. */}
+            {badge === 'local-skewed' && (
+              <span className='trend-comparison__badge'>
+                <FormattedMessage
+                  id='trend_comparison.badge.local_skewed'
+                  defaultMessage='Hot here, quiet elsewhere'
+                />
+              </span>
+            )}
+            {badge === 'network-wide' && (
+              <span className='trend-comparison__badge'>
+                <FormattedMessage
+                  id='trend_comparison.badge.network_wide'
+                  defaultMessage='Network-wide trend'
+                />
+              </span>
+            )}
+
             <div
               className={classNames('trend-comparison__sparkline', {
                 'trend-comparison__sparkline--dimmed': scope === 'remote',
@@ -170,23 +192,6 @@ export const TrendComparisonTile: React.FC<TrendComparisonTileProps> = ({
                 </Sparklines>
               </SilentErrorBoundary>
             </div>
-
-            {badge === 'local-skewed' && (
-              <span className='trend-comparison__badge'>
-                <FormattedMessage
-                  id='trend_comparison.badge.local_skewed'
-                  defaultMessage='Hot here, quiet elsewhere'
-                />
-              </span>
-            )}
-            {badge === 'network-wide' && (
-              <span className='trend-comparison__badge'>
-                <FormattedMessage
-                  id='trend_comparison.badge.network_wide'
-                  defaultMessage='Network-wide trend'
-                />
-              </span>
-            )}
           </div>
         );
       })
