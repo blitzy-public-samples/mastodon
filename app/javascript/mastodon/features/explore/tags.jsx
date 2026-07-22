@@ -14,6 +14,8 @@ import { ImmutableHashtag as Hashtag } from 'mastodon/components/hashtag';
 import { LoadingIndicator } from 'mastodon/components/loading_indicator';
 import { WithRouterPropTypes } from 'mastodon/utils/react_router';
 
+import { TrendVelocityTile } from './components/trend_velocity/trend_velocity_tile';
+
 const mapStateToProps = state => ({
   hashtags: state.getIn(['trends', 'tags', 'items']),
   isLoadingHashtags: state.getIn(['trends', 'tags', 'isLoading']),
@@ -53,11 +55,15 @@ class Tags extends PureComponent {
     }
 
     return (
-      <div className='scrollable explore__links' data-nosnippet>
-        {isLoading ? (<LoadingIndicator />) : hashtags.map(hashtag => (
-          <Hashtag key={hashtag.get('name')} hashtag={hashtag} />
-        ))}
-      </div>
+      <>
+        <TrendVelocityTile hashtags={hashtags} />
+
+        <div className='scrollable explore__links' data-nosnippet>
+          {isLoading ? (<LoadingIndicator />) : hashtags.map(hashtag => (
+            <Hashtag key={hashtag.get('name')} hashtag={hashtag} />
+          ))}
+        </div>
+      </>
     );
   }
 
