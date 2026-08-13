@@ -1,0 +1,3 @@
+# Toolchain pin for the Phoenix application, read by asdf and mise. Decision log: DL-03.
+elixir 1.19.5-otp-28
+erlang 28.5.0.5

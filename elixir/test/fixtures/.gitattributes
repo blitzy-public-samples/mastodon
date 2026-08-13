@@ -1,0 +1,3 @@
+# requests/ holds byte-for-byte copies of spec/fixtures/requests.
+# Git must not convert text or line endings there. See docs/architecture/decision-log.md.
+requests/**                   -text !eol
