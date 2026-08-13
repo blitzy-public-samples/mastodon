@@ -6,8 +6,7 @@
     "node": ">=22"
   },
   "workspaces": [
-    ".",
-    "streaming"
+    "."
   ],
   "scripts": {
     "dev": "vite dev",
@@ -24,7 +23,6 @@
     "lint": "yarn lint:js && yarn lint:css",
     "postversion": "git push --tags",
     "postinstall": "test -d node_modules/husky && husky || echo \"husky is not installed\"",
-    "start": "node ./streaming/index.js",
     "test": "yarn lint && yarn run typecheck && yarn test:js run",
     "test:js": "vitest --project=legacy-tests",
     "test:storybook": "vitest --project=storybook",
